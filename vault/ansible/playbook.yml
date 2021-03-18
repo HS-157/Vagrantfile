@@ -1,0 +1,51 @@
+---
+- name: "Vagrant Ansible"
+  hosts: all
+  remote_user: root
+  become: yes
+  become_method: sudo
+  vars_prompt:
+    - name: token
+      prompt: Token ?
+
+  tasks:
+  - name: "Install base tools"
+    apt:
+      name:
+        - "jq"
+        - "python3"
+        - "python3-setuptools"
+        - "python3-pip"
+        - "python"
+        - "python-setuptools"
+        - "python-pip"
+
+  - name: "Install Postgres"
+    apt:
+      name:
+        - "postgresql"
+        - "postgresql-client"
+
+  - name: "Pip install hvac"
+    pip:
+      executable: "pip3"
+      name:
+        - "pip"
+        - "boto"
+        - "hvac"
+        - "hvac[parser]"
+
+  - name: "Pip install hvac"
+    pip:
+      executable: "pip2"
+      name:
+        - "pip"
+        - "boto"
+        - "hvac"
+        - "hvac[parser]"
+
+  - debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/postgresql/user:name token={{ token }} url=https://127.0.0.1:8200 validate_certs=no') }}"
+
+  - debug:
+      msg: "{{ lookup('hashi_vault', 'secret=secret/postgresql/password:toto token={{ token }} url=https://127.0.0.1:8200 validate_certs=no') }}"

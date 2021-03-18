@@ -1,0 +1,49 @@
+---
+- name: "Vagrant Ansible"
+  hosts: all
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  tasks:
+  - name: "Install base tools"
+    apt:
+      name:
+        - "python3"
+        - "git"
+        - "tmux"
+        - "jq"
+        - "ansible"
+
+  - name: "Download termite terminfo"
+    get_url:
+      url: "https://raw.githubusercontent.com/thestinger/termite/master/termite.terminfo"
+      dest: "/tmp/termite.terminfo"
+
+  - name: "tic termite.terminfo"
+    ansible.builtin.shell: "tic -x /tmp/termite.terminfo"
+
+  - name: "Add Vault apt key"
+    ansible.builtin.apt_key:
+      url: "https://apt.releases.hashicorp.com/gpg"
+      state: "present"
+
+  - name: "Add Vault repository"
+    ansible.builtin.apt_repository:
+      repo: "deb [arch=amd64] https://apt.releases.hashicorp.com buster main"
+      state: "present"
+
+  - name: "Install vault"
+    apt:
+      name:
+        - "vault"
+
+  - name: "Synchronize Vault provision directory"
+    ansible.posix.synchronize:
+      src: vault
+      dest: /tmp/
+
+  - name: "Synchronize Ansible test playbook for Vault"
+    ansible.posix.synchronize:
+      src: ansible
+      dest: /tmp/
