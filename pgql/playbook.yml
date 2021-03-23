@@ -1,0 +1,138 @@
+---
+- name: "Vagrant Ansible"
+  hosts: all
+  remote_user: root
+  become: yes
+  become_method: sudo
+  vars:
+    datatest:
+      - url: "https://ftp.postgresql.org/pub/projects/pgFoundry/dbsamples/french-towns-communes-francais/french-towns-communes-francaises-1.0/french-towns-communes-francaises-1.0.tar.gz"
+        table: "ville_france"
+        dump: "/tmp/french-towns-communes-francaises.sql"
+      - url: "https://ftp.postgresql.org/pub/projects/pgFoundry/dbsamples/world/world-1.0/world-1.0.tar.gz"
+        table: "world"
+        dump: "/tmp/dbsamples-0.1/world/world.sql"
+      - url: "https://ftp.postgresql.org/pub/projects/pgFoundry/dbsamples/iso-3166/iso-3166-1.0/iso-3166-1.0.tar.gz"
+        table: "iso-3166"
+        dump: "/tmp/iso-3166/iso-3166.sql"
+      - url: "https://ftp.postgresql.org/pub/projects/pgFoundry/dbsamples/usda/usda-r18-1.0/usda-r18-1.0.tar.gz"
+        table: "usda"
+        dump: "/tmp/usda-r18-1.0/usda.sql"
+      - url: "http://www.sportsdb.org/modules/sd/assets/downloads/sportsdb_sample_postgresql.zip"
+        table: "sports"
+        dump: "/tmp/sportsdb_sample_postgresql_20080304.sql"
+
+  tasks:
+
+  - name: "Include vars file"
+    include_vars: "psql/vars.yml"
+
+  - name: "Download termite terminfo"
+    get_url:
+      url: "https://raw.githubusercontent.com/thestinger/termite/master/termite.terminfo"
+      dest: "/tmp/termite.terminfo"
+
+  - name: "tic termite.terminfo"
+    ansible.builtin.shell: "tic -x /tmp/termite.terminfo"
+
+  - name: "Install Python / git"
+    apt:
+      name:
+        - "python3"
+        - "git"
+        - "python-psycopg2"
+        - "python3-psycopg2"
+        - "unzip"
+        - "awscli"
+
+  - name: "Synchronize psql directory"
+    ansible.posix.synchronize:
+      src: "psql"
+      dest: "/tmp"
+
+  - name: "Add PostgreSQL apt key"
+    ansible.builtin.apt_key:
+      url: "https://www.postgresql.org/media/keys/ACCC4CF8.asc"
+      state: "present"
+
+  - name: "Add PostgreSQL repository"
+    ansible.builtin.apt_repository:
+      repo: "deb http://apt.postgresql.org/pub/repos/apt buster-pgdg main"
+      state: "present"
+
+  - name: "Install Postgres"
+    apt:
+      name:
+        - "postgresql-12"
+        - "postgresql-client-12"
+
+  - name: "Copy public key"
+    ansible.builtin.template:
+      src: "psql/public_key.gpg"
+      dest: "/var/lib/postgresql/public_key.gpg"
+      owner: "postgres"
+      mode: "0600"
+
+  - name: "Creates aws directory"
+    ansible.builtin.file:
+      path: "/var/lib/postgresql/.aws"
+      state: "directory"
+      owner: "postgres"
+      group: "postgres"
+
+
+  - name: "Template AWS S3 credentials"
+    ansible.builtin.template:
+      src: "psql/credentials"
+      dest: "/var/lib/postgresql/.aws/credentials"
+      owner: "postgres"
+      mode: "0600"
+
+  - name: "Template dump script"
+    ansible.builtin.template:
+      src: "psql/dump.sh"
+      dest: "/var/lib/postgresql/dump.sh"
+      owner: "postgres"
+      mode: "0755"
+
+  - name: "Unarchive data test"
+    ansible.builtin.unarchive:
+      src: "{{ item.url }}"
+      dest: "/tmp"
+      remote_src: "yes"
+    loop: "{{ datatest }}"
+
+  - name: "Create a new database with name test"
+    become: "yes"
+    become_user: "postgres"
+    become_method: "sudo"
+    community.postgresql.postgresql_db:
+      name: "{{ item.table }}"
+    loop: "{{ datatest }}"
+
+  - name: "Restore from dump"
+    become: "yes"
+    become_user: "postgres"
+    become_method: "sudo"
+    community.postgresql.postgresql_db:
+      name: "ville_france"
+      state: "restore"
+      target: "{{ item.dump }}"
+    loop: "{{ datatest }}"
+
+  - name: "Check if /tmp/dump/gpg folder is empty"
+    find:
+      paths: "/tmp/dump/gpg"
+    register: "gpg_files"
+
+  - name: "Execute dump script"
+    ansible.builtin.shell: "/var/lib/postgresql/dump.sh"
+    args:
+      executable: "/bin/bash"
+    when: gpg_files.matched == 0
+
+  - name: "Fetch encrypted sql dump"
+    ansible.posix.synchronize:
+      src: "/tmp/dump/gpg"
+      dest: "/tmp/psql-gpg"
+      mode: "pull"
