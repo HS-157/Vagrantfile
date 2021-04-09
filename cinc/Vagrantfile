@@ -1,0 +1,30 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  config.vm.box = "generic/debian10"
+
+
+  config.vm.provider "virtualbox" do |v|
+    v.cpus = 4
+    v.memory = 4096
+  end
+
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.cpus = 4
+    libvirt.memory = 4096
+  end
+
+  playbook = ['base.yml', 'chef-server.yml', 'knife.yml', 'chef-client.yml', 'build.yml']
+
+  playbook.each do |p|
+    config.vm.provision "ansible" do |ansible|
+      ansible.playbook = "playbook/#{p}"
+    end
+  end
+
+end

@@ -1,0 +1,30 @@
+---
+- name: "Vagrant Ansible"
+  hosts: all
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  tasks:
+
+
+  - name: "Download CINC Server"
+    get_url:
+      url: "http://downloads.cinc.sh/files/unstable/cinc-server/14.2.2/debian/10/cinc-server-core_14.2.2-1_amd64.deb"
+      dest: "/home/vagrant/cinc-server-core_14.2.2-1_amd64.deb"
+
+        #  - name: "Install CINC"
+        #    apt:
+        #      deb: "http://downloads.cinc.sh/files/unstable/cinc-server/14.2.2/debian/10/cinc-server-core_14.2.2-1_amd64.deb"
+
+  - name: "Creates /etc/opscode"
+    ansible.builtin.file:
+      path: "/etc/opscode"
+      state: "directory"
+
+  - name: "Chef-server config"
+    ansible.builtin.template:
+      src: "chef-server/chef-server.rb"
+      dest: "/etc/opscode/chef-server.rb"
+
+

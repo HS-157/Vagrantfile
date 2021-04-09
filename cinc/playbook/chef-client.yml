@@ -1,0 +1,16 @@
+---
+- name: "Vagrant Ansible"
+  hosts: all
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  tasks:
+  - name: "Download CINC client"
+    get_url:
+      url: "http://downloads.cinc.sh/files/stable/cinc/16.11.7/debian/10/cinc_16.11.7-1_amd64.deb"
+      dest: "/home/vagrant/cinc_16.11.7-1_amd64.deb"
+
+        #  - name: "Install CINC"
+        #    apt:
+        #      deb: "http://downloads.cinc.sh/files/stable/cinc/16.11.7/debian/10/cinc_16.11.7-1_amd64.deb"

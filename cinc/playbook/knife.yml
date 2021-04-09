@@ -1,0 +1,28 @@
+---
+- name: "Vagrant Ansible"
+  hosts: all
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  tasks:
+
+  - name: "Creates ~/.chef"
+    ansible.builtin.file:
+      path: "/home/vagrant/.cinc"
+      state: "directory"
+      owner: "vagrant"
+
+  - name: "Knife config"
+    ansible.builtin.template:
+      src: "knife/credentials"
+      dest: "/home/vagrant/.cinc/credentials"
+      owner: "vagrant"
+
+  - name: "Synchronize psql directory"
+    become: "yes"
+    become_user: "postgres"
+    become_method: "sudo"
+    ansible.posix.synchronize:
+      src: "cookbooks"
+      dest: "/home/vagrant"
