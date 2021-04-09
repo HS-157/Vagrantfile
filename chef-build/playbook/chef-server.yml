@@ -1,0 +1,19 @@
+---
+- name: "Vagrant Ansible"
+  hosts: all
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  tasks:
+
+  - name: "Creates chef-server directory"
+    ansible.builtin.file:
+      path: "/home/vagrant/chef-server"
+      state: "directory"
+
+  - name: "Install build script"
+    ansible.builtin.template:
+      src: "build.sh"
+      dest: "/home/vagrant/chef-server/build.sh"
+      mode: "u+rwx"

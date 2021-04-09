@@ -1,0 +1,29 @@
+---
+- name: "Vagrant Ansible"
+  hosts: all
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  tasks:
+  - name: "Download termite terminfo"
+    get_url:
+      url: "https://raw.githubusercontent.com/thestinger/termite/master/termite.terminfo"
+      dest: "/tmp/termite.terminfo"
+
+  - name: "tic termite.terminfo"
+    ansible.builtin.shell: "tic -x /tmp/termite.terminfo"
+
+  - name: "Install Python / git"
+    apt:
+      name:
+        - "python3"
+        - "git"
+        - "tmux"
+        - "htop"
+
+  - name: "Install omnibus install script"
+    ansible.builtin.template:
+      src: "omnibus.sh"
+      dest: "/home/vagrant/omnibus.sh"
+      mode: "u+rwx"

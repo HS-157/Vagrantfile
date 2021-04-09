@@ -1,0 +1,24 @@
+---
+- name: "Vagrant Ansible"
+  hosts: all
+  remote_user: root
+  become: yes
+  become_method: sudo
+
+  tasks:
+
+  - name: "Creates build directory"
+    ansible.builtin.file:
+      path: "/home/vagrant/cinc"
+      state: "directory"
+
+  - name: "Git clone cinc-server build repo"
+    ansible.builtin.git:
+      repo: "https://gitlab.com/cinc-project/distribution/server.git"
+      dest: "/home/vagrant/cinc/server"
+
+  - name: "Install patch extend script"
+    ansible.builtin.template:
+      src: "patch.sh"
+      dest: "/home/vagrant/cinc/patch.sh"
+      mode: "u+rwx"
