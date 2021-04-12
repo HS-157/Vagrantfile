@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
     libvirt.memory = 4096
   end
 
-  playbook = ['base.yml', 'chef-server.yml', 'knife.yml', 'chef-client.yml', 'build.yml']
+  playbook = ['base.yml', 'chef-server.yml', 'knife.yml', 'chef-client.yml']
 
   playbook.each do |p|
     config.vm.provision "ansible" do |ansible|
