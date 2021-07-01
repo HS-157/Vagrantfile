@@ -86,3 +86,35 @@ Exemple d'utilisation de Vault avec un playbook Ansible, il suffit de donner le 
 ~~~
 /tmp/ansible/provision.sh
 ~~~
+
+## Approle
+
+Activer les approles :
+~~~
+vault auth enable approle
+~~~
+
+Créer un approle (via l'api) :
+~~~
+/tmp/vault/approle/create.sh
+~~~
+
+On peut le lister :
+~~~
+vault list auth/approle/role
+~~~
+
+Voir les infos d'un approle en particulier :
+~~~
+vault read auth/approle/role/test_toto
+~~~
+
+Pour peut rajouter une policy au approle (via l'api) :
+~~~
+/tmp/vault/approle/policy.sh
+~~~
+
+Et on peut voir si c'est bien appliqué :
+~~~
+vault read auth/approle/role/test_toto/policies
+~~~
