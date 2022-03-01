@@ -1,0 +1,20 @@
+---
+- name: "Salve PostreSQL"
+  hosts: "slave"
+  tasks:
+    - name: "Stop postgreSQL"
+      service:
+        name: "postgresql@13-main.service"
+        state: "stopped"
+      become: "yes"
+
+    - name: "/etc/postgresql/13/main"
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: "/etc/postgresql/13/main/{{ item }}"
+        mode: "0640"
+      become: "yes"
+      loop:
+        - "pg_ctl.conf"
+        - "pg_hba.conf"
+        - "postgresql.conf"

@@ -1,0 +1,61 @@
+---
+- name: "Master PostreSQL"
+  hosts: "master"
+  vars:
+    ansible_ssh_pipelining: true
+
+  handlers:
+    - name: "restart postgres"
+      service:
+        name: "postgresql@13-main.service"
+        state: "restarted"
+      become: "yes"
+
+    - name: "restore database"
+      postgresql_db:
+        state: "restore"
+        name: "dvdrental"
+        target: "/tmp/db/dvdrental.tar"
+      become: "yes"
+      become_user: "postgres"
+
+  tasks:
+    - name: "/etc/postgresql/13/main"
+      ansible.builtin.template:
+        src: "{{ item }}"
+        dest: "/etc/postgresql/13/main/{{ item }}"
+        mode: "0640"
+      become: "yes"
+      loop:
+        - "pg_ctl.conf"
+        - "pg_hba.conf"
+        - "postgresql.conf"
+      notify: "restart postgres"
+
+    - name: "Create replication user account"
+      postgresql_user:
+        name: "replication"
+        password: "azertyuiop"
+        role_attr_flags: "replication"
+      become: "yes"
+      become_user: "postgres"
+
+  post_tasks:
+    - name: "Create dvdrental database"
+      postgresql_db:
+        state: "present"
+        name: "dvdrental"
+      become: "yes"
+      become_user: "postgres"
+
+    - name: "/tmp/db"
+      ansible.builtin.file:
+        path: "/tmp/db"
+        state: "directory"
+
+    - name: "Extract remote dump"
+      ansible.builtin.unarchive:
+        remote_src: "yes"
+        src: "https://www.postgresqltutorial.com/wp-content/uploads/2019/05/dvdrental.zip"
+        dest: "/tmp/db"
+      notify: "restore database"

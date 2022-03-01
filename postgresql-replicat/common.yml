@@ -1,0 +1,36 @@
+---
+- name: "Common"
+  hosts: "all"
+  tasks:
+    - name: "Install base tools"
+      apt:
+        name:
+          - "python3"
+          - "git"
+          - "tmux"
+          - "jq"
+          - "ansible"
+          - "gnupg"
+          - "bash-completion"
+          - "python3-psycopg2"
+          - "unzip"
+      become: "yes"
+
+    - name: "Add PSQL apt key"
+      ansible.builtin.apt_key:
+        url: "https://www.postgresql.org/media/keys/ACCC4CF8.asc"
+        state: "present"
+      become: "yes"
+
+    - name: "Add PSQL repo"
+      ansible.builtin.apt_repository:
+        repo: "deb http://apt.postgresql.org/pub/repos/apt buster-pgdg main"
+        state: "present"
+      become: "yes"
+
+    - name: "Install PSQL"
+      apt:
+        name:
+          - "postgresql-13"
+          - "postgresql-client-13"
+      become: "yes"
