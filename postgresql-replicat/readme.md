@@ -65,3 +65,6 @@ And show on slave the dropped tables :
 sudo -u postgres psql -d "dvdrental" -c "\dt"
 ```
 
+# Reference
+
+* https://www.qunsul.com/posts/postgresql-13-streaming-replication-on-ubuntu.html
